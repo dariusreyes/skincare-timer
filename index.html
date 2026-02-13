@@ -18,13 +18,13 @@
     }
 
     .time {
-        font-size: 1.2rem;
+        font-size: 1rem;
         opacity: 0.6;
-        margin-bottom: 10px;
+        margin-bottom: 8px;
     }
 
     .product {
-        font-size: 1.5rem;
+        font-size: 1.4rem;
         margin-bottom: 20px;
         text-align: center;
     }
@@ -38,7 +38,14 @@
         align-items: center;
         justify-content: center;
         font-size: 3rem;
+        margin-bottom: 15px;
+    }
+
+    .transition {
+        font-size: 1rem;
+        opacity: 0.7;
         margin-bottom: 20px;
+        min-height: 24px;
     }
 
     .controls button {
@@ -62,6 +69,7 @@
 <div class="time" id="currentTime"></div>
 <div class="product" id="productName"></div>
 <div class="circle" id="timerDisplay">00</div>
+<div class="transition" id="transitionDisplay"></div>
 
 <div class="controls">
     <button onclick="startRoutine()">Start</button>
@@ -70,6 +78,8 @@
 </div>
 
 <script>
+const TRANSITION_TIME = 15;
+
 const AM_ROUTINE = [
     { name: "Vitamin C Serum", duration: 60 },
     { name: "Peptide Serum", duration: 45 },
@@ -89,6 +99,7 @@ let currentStep = 0;
 let timeLeft = 0;
 let interval = null;
 let paused = false;
+let inTransition = false;
 
 function updateClock() {
     const now = new Date();
@@ -97,7 +108,7 @@ function updateClock() {
     const ampm = hours >= 12 ? "PM" : "AM";
     const displayHour = hours % 12 || 12;
     document.getElementById("currentTime").innerText =
-        `${displayHour}:${minutes} ${ampm}`;
+        displayHour + ":" + minutes + " " + ampm;
 }
 
 function determineRoutine() {
@@ -116,11 +127,14 @@ function startStep() {
     if (currentStep >= routine.length) {
         document.getElementById("productName").innerText = "Routine Complete ✔";
         document.getElementById("timerDisplay").innerText = "✓";
+        document.getElementById("transitionDisplay").innerText = "";
         return;
     }
 
+    inTransition = false;
     const step = routine[currentStep];
     document.getElementById("productName").innerText = step.name;
+    document.getElementById("transitionDisplay").innerText = "";
     timeLeft = step.duration;
     updateDisplay();
 
@@ -129,6 +143,37 @@ function startStep() {
             timeLeft--;
             updateDisplay();
             if (timeLeft <= 0) {
+                clearInterval(interval);
+                interval = null;
+                startTransition();
+            }
+        }
+    }, 1000);
+}
+
+function startTransition() {
+    if (currentStep + 1 >= routine.length) {
+        currentStep++;
+        startStep();
+        return;
+    }
+
+    inTransition = true;
+    let transitionLeft = TRANSITION_TIME;
+    document.getElementById("productName").innerText = "Transition";
+    document.getElementById("transitionDisplay").innerText =
+        "Next: " + routine[currentStep + 1].name;
+
+    document.getElementById("timerDisplay").innerText =
+        transitionLeft.toString().padStart(2, '0');
+
+    interval = setInterval(() => {
+        if (!paused) {
+            transitionLeft--;
+            document.getElementById("timerDisplay").innerText =
+                transitionLeft.toString().padStart(2, '0');
+
+            if (transitionLeft <= 0) {
                 clearInterval(interval);
                 interval = null;
                 currentStep++;
@@ -155,6 +200,7 @@ function resetRoutine() {
     paused = false;
     document.getElementById("productName").innerText = "";
     document.getElementById("timerDisplay").innerText = "00";
+    document.getElementById("transitionDisplay").innerText = "";
 }
 
 setInterval(updateClock, 1000);
