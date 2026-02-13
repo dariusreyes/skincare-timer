@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Skincare Routine Timer</title>
+<style>
+    body {
+        margin: 0;
+        background: #000;
+        color: #fff;
+        font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+    }
+
+    .time {
+        font-size: 1.2rem;
+        opacity: 0.6;
+        margin-bottom: 10px;
+    }
+
+    .product {
+        font-size: 1.5rem;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+
+    .circle {
+        width: 260px;
+        height: 260px;
+        border-radius: 50%;
+        border: 8px solid orange;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        margin-bottom: 20px;
+    }
+
+    .controls button {
+        background: #222;
+        color: #fff;
+        border: none;
+        padding: 12px 20px;
+        margin: 5px;
+        border-radius: 25px;
+        font-size: 1rem;
+        cursor: pointer;
+    }
+
+    .controls button:hover {
+        background: orange;
+    }
+</style>
+</head>
+<body>
+
+<div class="time" id="currentTime"></div>
+<div class="product" id="productName"></div>
+<div class="circle" id="timerDisplay">00</div>
+
+<div class="controls">
+    <button onclick="startRoutine()">Start</button>
+    <button onclick="pauseTimer()">Pause</button>
+    <button onclick="resetRoutine()">Reset</button>
+</div>
+
+<script>
+const AM_ROUTINE = [
+    { name: "Vitamin C Serum", duration: 60 },
+    { name: "Peptide Serum", duration: 45 },
+    { name: "Hyaluronic Acid", duration: 30 },
+    { name: "Moisturizer", duration: 45 },
+    { name: "Sunscreen", duration: 30 }
+];
+
+const PM_ROUTINE = [
+    { name: "Peptide Serum", duration: 45 },
+    { name: "Hyaluronic Acid", duration: 30 },
+    { name: "Moisturizer", duration: 60 }
+];
+
+let routine = [];
+let currentStep = 0;
+let timeLeft = 0;
+let interval = null;
+let paused = false;
+
+function updateClock() {
+    const now = new Date();
+    const hours = now.getHours();
+    const minutes = now.getMinutes().toString().padStart(2, '0');
+    const ampm = hours >= 12 ? "PM" : "AM";
+    const displayHour = hours % 12 || 12;
+    document.getElementById("currentTime").innerText =
+        `${displayHour}:${minutes} ${ampm}`;
+}
+
+function determineRoutine() {
+    const hour = new Date().getHours();
+    return hour < 12 ? AM_ROUTINE : PM_ROUTINE;
+}
+
+function startRoutine() {
+    if (interval) return;
+    routine = determineRoutine();
+    currentStep = 0;
+    startStep();
+}
+
+function startStep() {
+    if (currentStep >= routine.length) {
+        document.getElementById("productName").innerText = "Routine Complete ✔";
+        document.getElementById("timerDisplay").innerText = "✓";
+        return;
+    }
+
+    const step = routine[currentStep];
+    document.getElementById("productName").innerText = step.name;
+    timeLeft = step.duration;
+    updateDisplay();
+
+    interval = setInterval(() => {
+        if (!paused) {
+            timeLeft--;
+            updateDisplay();
+            if (timeLeft <= 0) {
+                clearInterval(interval);
+                interval = null;
+                currentStep++;
+                startStep();
+            }
+        }
+    }, 1000);
+}
+
+function updateDisplay() {
+    document.getElementById("timerDisplay").innerText =
+        timeLeft.toString().padStart(2, '0');
+}
+
+function pauseTimer() {
+    paused = !paused;
+}
+
+function resetRoutine() {
+    clearInterval(interval);
+    interval = null;
+    currentStep = 0;
+    timeLeft = 0;
+    paused = false;
+    document.getElementById("productName").innerText = "";
+    document.getElementById("timerDisplay").innerText = "00";
+}
+
+setInterval(updateClock, 1000);
+updateClock();
+</script>
+
+</body>
+</html>
